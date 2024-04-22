@@ -21,18 +21,18 @@
             <h2 ><center>the previous predictions for you / <a class="navbar-brand" style="color:red" href="{{url_for('home')}}" >Home</a></center></h2>
             
             <div class="row p-5">
-              {% for prediction in predictions %}
+              {% for allpneumonia in allpneumonias %}
               <div class="col-4">
                 <div class="card mb-4">
                   <div class="card-body text-center">
 
                     {% for filename in image_files %}
-                    <img src="{{ url_for('static', filename='uploads/' + prediction.image_path) }}"  alt="avatar"
+                    <img src="{{ url_for('static', filename='uploads/' + allpneumonia.image_path) }}"  alt="avatar"
                     class="rounded img-fluid " style="width: 150px;">
                      {% endfor %}
                     
                   
-                      {% if prediction.has_pneumonia == '[[1.]]' %}
+                      {% if allpneumonia.has_pneumonia == '[[1.]]' %}
 
                     <h2 class=" text-danger text-uppercase my-3"> Pneumonia detected</h2>
                     {% else %}
@@ -41,7 +41,6 @@
                     {% endif %}
 
                     <div class="d-flex justify-content-center mb-2">
-                      <button type="button" class=" text-uppercase btn btn-outline-danger ms-1"><a class="navbar-brand" href="{{ url_for('delete_Pneumonia',id=prediction.id)}}" >delete </a>
 
 
                     </div>

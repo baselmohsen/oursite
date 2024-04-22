@@ -133,19 +133,21 @@ def update_user():
     # Fetch form data
     user_id = request.form['user_id']
     username = request.form['username']
+
     password = request.form['password']
     address = request.form['address']
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     # Validate inputs
-    if not all([user_id, username, password, address]):
+    if not all([user_id, username,  address]):
         return 'Please fill out all the fields.'
     elif not re.match(r'[A-Za-z0-9]+', username):
         return 'Username must contain only characters and numbers.'
 
     # Update user information in the database
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('UPDATE users SET username = %s, price = %s, address = %s city = %s WHERE id = %s',
-                   (username, password, address, user_id))
+    cursor.execute('UPDATE users SET username = %s,password = %s,address = %s  WHERE id = %s',
+                   (username,hashed_password,  address, user_id))
     mysql.connection.commit()
 
     return redirect(url_for('profile'))
@@ -157,8 +159,10 @@ def update_doctor():
     user_id = request.form['user_id']
     username = request.form['username']
     address = request.form['address']
+    password = request.form['password']
     city = request.form['city']
     price = request.form['price']
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     # Validate inputs
     if not all([user_id, username, address,city,address,price]):
@@ -168,8 +172,8 @@ def update_doctor():
 
     # Update user information in the database
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('UPDATE doctors SET username = %s, address = %s, city = %s ,price = %s WHERE id = %s',
-                   (username, address,city,price, user_id))
+    cursor.execute('UPDATE doctors SET username = %s,password = %s, address = %s, city = %s ,price = %s WHERE id = %s',
+                   (username,hashed_password, address,city,price, user_id))
     mysql.connection.commit()
 
     return redirect(url_for('doctor_home'))
@@ -336,6 +340,10 @@ def doctor_home():
 def contact():
     return render_template('contact.html')
 
+@app.route("/test")
+def test():
+    return render_template('test.html')
+
 @app.route("/find_doctor")
 def find_doctor():
     def Getdoctors():      
@@ -404,6 +412,15 @@ def reservation_delete(id):
     return redirect(url_for('doctor_home'))
  
      
+@app.route('/delete_Pneumonia/<int:id>', methods = ['GET','POST','DELETE'])
+def delete_Pneumonia(id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    select_stmt = "DELETE FROM prediction_pneumonia WHERE id = %(id)s ORDER BY id DESC "
+    cursor.execute(select_stmt, { 'id': id })
+    mysql.connection.commit() 
+    return redirect(url_for('pneumonia'))
+ 
+     
 
    
 @app.route("/profile")
@@ -458,9 +475,44 @@ def delete(id):
 def suger():
     return render_template('suger.html')
 
+UPLOADS_FOLDER = 'uploads'
+
 @app.route("/pneumonia")
 def pneumonia():
-    return render_template('pneumonia.html')
+    id=int(session['id'])
+    def Getpredictions():
+     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+     select_stmt = "SELECT * FROM prediction_pneumonia where user_id = %(id)s ORDER BY id DESC "
+     cursor.execute(select_stmt, { 'id': id })
+ 
+     mysql.connection.commit() 
+     predictions=cursor.fetchall() 
+     return predictions
+     
+    predictions = Getpredictions()
+    image_files = os.listdir(UPLOADS_FOLDER)
+
+    return render_template('pneumonia.html',predictions=predictions, image_files=image_files)
+
+@app.route("/allpneumonias")
+def allpneumonias():
+     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+     select_stmt = "SELECT * FROM prediction_pneumonia "
+     cursor.execute(select_stmt)
+ 
+     mysql.connection.commit() 
+     allpneumonias=cursor.fetchall() 
+     image_files = os.listdir(UPLOADS_FOLDER)
+
+     return render_template('allpneumonia.html',allpneumonias=allpneumonias, image_files=image_files)
+     
+   
+
+
+
+
+
+
 
 @app.route("/reconmendation")
 def reconmendation():
@@ -526,34 +578,74 @@ def model_predict(img_path, model):
     return preds
 
 
+# @app.route('/predict', methods=['GET', 'POST'])
+# def upload():
+#     if request.method == 'POST':
+#         # Get the file from post request
+#         f = request.files['file']
+        
+#         # Save the file to ./uploads
+#         basepath = os.path.dirname(__file__)
+#         file_path = os.path.join(
+#             basepath, 'uploads', secure_filename(f.filename))
+#         f.save(file_path)
 
-@app.route('/predict', methods=['GET', 'POST'])
-def upload():
-    if request.method == 'POST':
-        # Get the file from post request
-        f = request.files['file']
+#         # Make prediction
+#         preds = model_predict(file_path, model)
 
-        # Save the file to ./uploads
-        basepath = os.path.dirname(__file__)
-        file_path = os.path.join(
-            basepath, 'uploads', secure_filename(f.filename))
-        f.save(file_path)
+#         # Arrange the correct return according to the model. 
+# 		# In this model 1 is Pneumonia and 0 is Normal.
+    
+#         str1 = 'Pneumonia.  '
+#         str2 = 'Normal'
+#         if preds == 1:
+          
+#             return str1
+#         else:
+#             return str2
+
+
+
+
+import numpy as np
+from tensorflow.keras.models import load_model
+from flask import Flask, render_template, request
+import time
+
+
+@app.route('/predict_pneumonia', methods=['POST'])
+def predict_pneumonia():
+    if 'image' not in request.files:
+        return 'No image uploaded'
+    user_id=request.form['id']
+    img = request.files['image']
+    timestamp = str(time.time())
+    # Perform pneumonia detection
+    basepath = os.path.dirname(__file__)
+    file_path = os.path.join(
+        basepath, 'static/uploads', secure_filename(timestamp+img.filename))
+    img.save(file_path)
 
         # Make prediction
-        preds = model_predict(file_path, model)
+    result = model_predict(file_path, model)
 
-
-
-        # Arrange the correct return according to the model. 
-		# In this model 1 is Pneumonia and 0 is Normal.
-
-        str1 = 'Pneumonia.  '
-        str2 = 'Normal'
-        if preds == 1:
-            return str1
-        else:
-            return str2
     
+    cursor = mysql.connection.cursor()
+    cursor.execute('INSERT INTO prediction_pneumonia (id,user_id,image_path, has_pneumonia) VALUES (Null,%s,%s, %s)', (user_id,timestamp+img.filename, result))
+    mysql.connection.commit()
+
+    if result > 0.5:
+        return render_template('test.html',result=f'1')
+    else:
+        return render_template('test.html',result=f'0')
+
+
+
+
+
+
+
+
 
 
 
