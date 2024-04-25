@@ -101,16 +101,19 @@ def register():
     if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'type' in request.form and 'address' in request.form :
         username = request.form['username']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         email = request.form['email']
         address = request.form['address']
         type = request.form['type']
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
+        
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT * FROM users WHERE username = % s', (username, ))
         account = cursor.fetchone()
         if account:
             msg = 'Account already exists !'
+        if password != confirm_password:
+            msg='Passwords do not match. Please try again.'    
         elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
             msg = 'Invalid email address !'
         elif not re.match(r'[A-Za-z0-9]+', username):
@@ -133,10 +136,10 @@ def update_user():
     # Fetch form data
     user_id = request.form['user_id']
     username = request.form['username']
-
     password = request.form['password']
-    address = request.form['address']
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+    address = request.form['address']
 
     # Validate inputs
     if not all([user_id, username,  address]):
@@ -278,7 +281,7 @@ def edit_user():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         select_stmt = "select * FROM users WHERE id = %(id)s"
         cursor.execute(select_stmt, { 'id': id })
-        user=cursor.fetchone() 
+        user=cursor.fetchone()
         return user 
     user=user()
     return render_template('edit_user.html',id=id,user=user)
@@ -412,12 +415,15 @@ def reservation_delete(id):
     return redirect(url_for('doctor_home'))
  
      
-@app.route('/delete_Pneumonia/<int:id>', methods = ['GET','POST','DELETE'])
-def delete_Pneumonia(id):
+@app.route('/delete_Pneumonia/<int:id>/<string:image_path>', methods = ['GET','POST','DELETE'])
+def delete_Pneumonia(id,image_path):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     select_stmt = "DELETE FROM prediction_pneumonia WHERE id = %(id)s ORDER BY id DESC "
     cursor.execute(select_stmt, { 'id': id })
-    mysql.connection.commit() 
+    mysql.connection.commit()
+    imagepath = 'static/uploads/' + image_path
+    if os.path.exists(imagepath):
+        os.remove(imagepath)
     return redirect(url_for('pneumonia'))
  
      

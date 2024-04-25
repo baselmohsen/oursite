@@ -41,7 +41,7 @@
                     {% endif %}
 
                     <div class="d-flex justify-content-center mb-2">
-                      <button type="button" class=" text-uppercase btn btn-outline-danger ms-1"><a class="navbar-brand" href="{{ url_for('delete_Pneumonia',id=prediction.id)}}" >delete </a>
+                      <button type="button" class=" text-uppercase btn btn-outline-danger ms-1"><a class="navbar-brand" href="{{ url_for('delete_Pneumonia',id=prediction.id,	image_path=	prediction.image_path)}}" >delete </a>
 
 
                     </div>
