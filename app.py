@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request ,redirect, url_for, session
+from flask import  flash
+from flask_login import LoginManager
+
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
-from flask_login import current_user
+from flask_login import logout_user
 import re
 import pickle
 import sys
@@ -52,6 +55,7 @@ def login():
                 session['id'] = user['id']
                 session['username'] = user['username']
                 session['type'] = user['type']
+                flash('Login successful!', 'success')
                 return redirect(url_for('home'))  # Change 'dashboard' to your actual dashboard route
             else:
                 msg = 'Incorrect password.'
@@ -86,29 +90,35 @@ def doctorLogin():
 
     return render_template('doctorLogin.html', msg=msg)
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET'])
 def logout():
-    session.pop('loggedin', None)
-    session.pop('id', None)
-    session.pop('username', None)
-    session.pop('type', None)
+    if 'loggedin' in session:
+        # Clear the user's session
+        session.clear()
+        flash('You have been successfully logged out.', 'success')
+    else:
+        flash('You are not logged in.', 'info')
+    # Redirect the user to the home page
     return redirect(url_for('home'))
-    # return render_template('home.html')
 
 @app.route('/register', methods =['GET', 'POST'])
 def register():
     msg = ''
-    if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'type' in request.form and 'address' in request.form :
+    if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'type' in request.form and 'address' in request.form and 'phone' in request.form and 'sex' in request.form:
         username = request.form['username']
+        if username:
+         usernamee = username.replace(" ", "_")
         password = request.form['password']
         confirm_password = request.form['confirm_password']
         email = request.form['email']
         address = request.form['address']
+        phone = request.form['phone']
+        sex = request.form['sex']
         type = request.form['type']
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM users WHERE username = % s', (username, ))
+        cursor.execute('SELECT * FROM users WHERE username = % s', (usernamee, ))
         account = cursor.fetchone()
         if account:
             msg = 'Account already exists !'
@@ -121,7 +131,7 @@ def register():
         elif not username or not password or not email:
             msg = 'Please fill out the form !'
         else:
-            cursor.execute('INSERT INTO users VALUES (NULL, % s,% s, % s, % s, % s)', (username,type, hashed_password, email,address ))
+            cursor.execute('INSERT INTO users VALUES (NULL, % s,% s, % s, % s, % s, % s, % s)', (usernamee,type, hashed_password, email,address,phone,sex ))
             mysql.connection.commit()
             account = cursor.fetchone()
             return redirect(url_for('login'))
@@ -136,10 +146,10 @@ def update_user():
     # Fetch form data
     user_id = request.form['user_id']
     username = request.form['username']
-    password = request.form['password']
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
+    if username:
+         usernamee = username.replace(" ", "_")
     address = request.form['address']
+    phone = request.form['phone']
 
     # Validate inputs
     if not all([user_id, username,  address]):
@@ -149,8 +159,8 @@ def update_user():
 
     # Update user information in the database
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('UPDATE users SET username = %s,password = %s,address = %s  WHERE id = %s',
-                   (username,hashed_password,  address, user_id))
+    cursor.execute('UPDATE users SET username = %s,address = %s ,phone = %s  WHERE id = %s',
+                   (usernamee,  address,phone, user_id))
     mysql.connection.commit()
 
     return redirect(url_for('profile'))
@@ -161,11 +171,11 @@ def update_doctor():
     # Fetch form data
     user_id = request.form['user_id']
     username = request.form['username']
+    if username:
+         usernamee = username.replace(" ", "_")
     address = request.form['address']
-    password = request.form['password']
     city = request.form['city']
     price = request.form['price']
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     # Validate inputs
     if not all([user_id, username, address,city,address,price]):
@@ -175,14 +185,45 @@ def update_doctor():
 
     # Update user information in the database
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('UPDATE doctors SET username = %s,password = %s, address = %s, city = %s ,price = %s WHERE id = %s',
-                   (username,hashed_password, address,city,price, user_id))
+    cursor.execute('UPDATE doctors SET username = %s, address = %s, city = %s ,price = %s WHERE id = %s',
+                   (usernamee, address,city,price, user_id))
     mysql.connection.commit()
 
     return redirect(url_for('doctor_home'))
 
 
+@app.route('/change_password', methods=['GET', 'POST'])
+def change_password():
+    msg = ''
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
 
+    if request.method == 'POST':
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+
+        # Fetch user from database
+        user_id = session['id']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))
+        user = cursor.fetchone()
+        
+        # Check if old password matches
+        if bcrypt.checkpw(old_password.encode('utf-8'), user['password'].encode('utf-8')):
+            # Validate new password
+            if len(new_password) < 8:
+                msg='New password must be at least 8 characters long.'
+            else:
+                # Update password in database
+                hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+                cursor.execute('UPDATE users SET password = %s WHERE id = %s', (hashed_password, user_id))
+                mysql.connection.commit() 
+                msg='Password changed successfully.'
+                return redirect(url_for('profile'))
+        else:
+            msg='Incorrect old password.'
+
+    return render_template('change_password.html',msg=msg)
 
 
 
@@ -196,18 +237,21 @@ def update_doctor():
 @app.route('/doctorRegister', methods =['GET', 'POST'])
 def doctorRegister():
     msg = ''
-    if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'address' in request.form and 'spec' in request.form and 'city' in request.form and 'price' in request.form:
+    if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'address' in request.form and 'spec' in request.form and 'city' in request.form and 'price' in request.form and 'sex' in request.form:
         username = request.form['username']
+        if username:
+         usernamee = username.replace(" ", "_")
         password = request.form['password']
         email = request.form['email']
         city = request.form['city']
         address = request.form['address']
         spec = request.form['spec']
         price = request.form['price']
+        sex = request.form['sex']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-        cursor.execute('SELECT * FROM doctors WHERE username = % s', (username, ))
+        cursor.execute('SELECT * FROM doctors WHERE username = % s', (usernamee, ))
         account = cursor.fetchone()
         if account:
             msg = 'Account already exists !'
@@ -218,7 +262,7 @@ def doctorRegister():
         elif not username or not password or not email:
             msg = 'Please fill out the form !'
         else:
-            cursor.execute('INSERT INTO doctors VALUES (NULL, % s,% s, % s, % s,% s,% s,% s)', (username, hashed_password, email,city,address,spec,price ))
+            cursor.execute('INSERT INTO doctors VALUES (NULL, % s,% s, % s, % s,% s,% s,% s,% s)', (usernamee, hashed_password, email,city,address,spec,price,sex ))
             mysql.connection.commit()
             account = cursor.fetchone()
             return redirect(url_for('doctorLogin'))
@@ -406,7 +450,7 @@ def reservation():
         flash("Your reservation has been successful")
         return redirect(url_for('find_doctor'))   
       
-@app.route('/delete/<int:id>', methods = ['GET','POST','DELETE'])
+@app.route('/reservation_delete/<int:id>', methods = ['GET','POST','DELETE'])
 def reservation_delete(id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     select_stmt = "DELETE FROM reservations WHERE id = %(id)s ORDER BY id DESC "
@@ -436,7 +480,7 @@ def profile():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         select_stmt = "select * FROM users WHERE id = %(id)s"
         cursor.execute(select_stmt, { 'id': id })
-        user=cursor.fetchone() 
+        user=cursor.fetchone()
         return user 
     user=user()
     def Getpredictions():
@@ -449,6 +493,7 @@ def profile():
      return predictions
      
     predictions = Getpredictions()
+    
     return render_template('profile.html',predictions=predictions,user=user)
 
 @app.route("/admin")
@@ -465,8 +510,8 @@ def admin():
     predictions = Getpredictionss()
     return render_template('admin.html',predictions=predictions)
 
-@app.route('/delete/<int:id>', methods = ['GET','POST','DELETE'])
-def delete(id):
+@app.route('/delete_suger/<int:id>', methods = ['GET','POST','DELETE'])
+def delete_suger(id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     select_stmt = "DELETE FROM prediction_suger WHERE id = %(id)s ORDER BY id DESC "
     cursor.execute(select_stmt, { 'id': id })
@@ -532,7 +577,7 @@ def reconmendationsuger():
 
 @app.route("/predict_suger", methods=['POST'])
 def predict_suger():
-
+    msg=''
     Pregnancies= int(request.form['Pregnancies'])
     Glucose = int(request.form['Glucose'])
     BloodPressure = int(request.form['BloodPressure'])
@@ -541,7 +586,13 @@ def predict_suger():
     BMI = float(request.form['BMI'])
     DiabetesPedigreeFunction = float(request.form['DiabetesPedigreeFunction'])
     Age= int(request.form['Age'])
-       
+    
+    if Age < 10 or Age > 100:
+        return render_template('error.html', message='Age must be between 10 and 100')
+
+    if Insulin < 0 or Insulin > 500:
+        return render_template('error.html', message='Insulin must be between 0 and 500')
+
     prediction = suger_model.predict([[
         Pregnancies, Glucose,BloodPressure,SkinThickness,
         Insulin,BMI,DiabetesPedigreeFunction,Age
@@ -554,8 +605,10 @@ def predict_suger():
         SkinThickness = int(request.form['SkinThickness'])
         Insulin = int(request.form['Insulin'])
         BMI = float(request.form['BMI'])
+        
         DiabetesPedigreeFunction = float(request.form['DiabetesPedigreeFunction'])
         Age =int( request.form['Age'])
+        
         user_id=int(request.form['user_id'])
         result=int(prediction)
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -567,6 +620,8 @@ def predict_suger():
             return render_template('suger.html',prediction_text=f'0')
     elif(prediction==1):
             return render_template('suger.html',prediction_text=f'1')
+            
+
     
        
         
@@ -631,21 +686,20 @@ def predict_pneumonia():
     file_path = os.path.join(
         basepath, 'static/uploads', secure_filename(timestamp+img.filename))
     img.save(file_path)
-
+    
         # Make prediction
+        
     result = model_predict(file_path, model)
 
-    
     cursor = mysql.connection.cursor()
     cursor.execute('INSERT INTO prediction_pneumonia (id,user_id,image_path, has_pneumonia) VALUES (Null,%s,%s, %s)', (user_id,timestamp+img.filename, result))
     mysql.connection.commit()
-
+    
     if result > 0.5:
         return render_template('test.html',result=f'1')
     else:
         return render_template('test.html',result=f'0')
-
-
+ 
 
 
 

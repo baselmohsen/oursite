@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Messages</title>
+    <style>
+        /* Define CSS styles for flash messages */
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div id="flash-messages">
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Your other HTML content -->
+</body>
+<script>
+    // Fade out flash messages after 5 seconds
+    setTimeout(function() {
+        var flashMessages = document.getElementById('flash-messages');
+        if (flashMessages) {
+            var messages = flashMessages.getElementsByClassName('flash-message');
+            for (var i = 0; i < messages.length; i++) {
+                fadeOut(messages[i]);
+            }
+        }
+    }, 5000);
+
+    // Function to fade out an element
+    function fadeOut(element) {
+        var opacity = 1;
+        var timer = setInterval(function() {
+            if (opacity <= 0.1) {
+                clearInterval(timer);
+                element.style.display = 'none';
+            }
+            element.style.opacity = opacity;
+            element.style.filter = 'alpha(opacity=' + opacity * 100 + ")";
+            opacity -= opacity * 0.1;
+        }, 50);
+    }
+</script>
+</html>

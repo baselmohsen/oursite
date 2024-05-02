@@ -24,6 +24,11 @@
         <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='dist/css/styles.css') }}">
 
         <link href="css/styles.css" rel="stylesheet" />
+        <style>
+            .hidden {
+                display: none;
+            }
+        </style>
     </head>
     <body id="page-top">
         <!-- Navigation-->
@@ -58,7 +63,13 @@
                         {% if session['loggedin']  %}   
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="{{ url_for('find_doctor') }}">find doctor</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="{{ url_for('chat') }}">ask Gemini</a></li>
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="{{url_for('profile')}}"> Hi {{session.username}}</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="{{url_for('profile')}}">
+                             <span class="hidden" id="username">{{session.username}}</span>
+
+            
+                            Hi <span id="usernameWithoutUnderscore">{{session.username}}</span>
+                            
+                            </a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="{{ url_for('logout') }}">Logout</a></li>
                                        
                         {% else %}
@@ -72,12 +83,16 @@
                     </ul>
                 </div>
             </div>
+      
         </nav>
-
+ 
 
         <!-- Masthead-->
         <header class="masthead bg-primary text-white text-center">
             <div class="container d-flex align-items-center flex-column">
+              
+                {% include 'messages.html' %}
+
                 <!-- Masthead Avatar Image-->
                 <img class="masthead-avatar mb-5" src="{{ url_for('static',filename='dist/assets/img/avataaars.svg') }}" alt="..." />
                 <!-- Masthead Heading-->
@@ -520,6 +535,21 @@
         <!-- * * Activate your form at https://startbootstrap.com/solution/contact-forms * *-->
         <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
         <script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
+          
+   
+    <script>
+        // Get the username element
+        
+        var usernameElement = document.getElementById("username");
+        // Get the username text content
+        var username = usernameElement.textContent;
+  
+        // Remove underscores from the username
+        var usernameWithoutUnderscore = username.replace(/_/g, " ");
+  
+        // Update the text content of the element to display the username without underscores
+        document.getElementById("usernameWithoutUnderscore").textContent = usernameWithoutUnderscore;
+    </script>
     </body>
 </html>
 

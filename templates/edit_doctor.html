@@ -23,6 +23,8 @@
 				  <div class="row justify-content-center">
 					<div class="col-md-10 col-lg-6 col-xl-5 order-2 order-lg-1">
                         <h2>Update Doctor Information</h2>
+						<h4 ><center>change your password / <a class="navbar-brand" style="color:red" href="{{url_for('change_password')}}" >here</a></center></h4>
+
                         <form action="{{ url_for('update_doctor') }}" method="post">
                             <input type="hidden" name="user_id" value="{{ id }}">
                            
@@ -41,10 +43,7 @@
 						<div class="form-group">
 						  <input type="text"  name="city"value={{doctor.city}} required class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter city">
 						</div>
-					</br>
-						<div class="form-group">
-						  <input type="text"  name="password" required class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter password">
-						</div>
+					
 					</br>
 						<div class="form-group">
 						  <input type="text"  name="price"value={{doctor.price}} required class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter price">

@@ -9,6 +9,11 @@
               font-family: 'Kalnia Underline', sans-serif;
           }
       </style>
+      <style>
+        .hidden {
+            display: none;
+        }
+    </style>
     <head/>
 <body>
   
@@ -24,11 +29,19 @@
           <div class="col-4">
             <div class="card mb-4">
               <div class="card-body text-center">
-                <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp" alt="avatar"
+                {% if doctor.sex == 'male' %}
+                <img src="{{ url_for('static',filename='dist/assets/img/avataaars.svg') }}" alt="avatar"
                   class="rounded-circle img-fluid" style="width: 150px;">
-                <h4 class="text-uppercase my-3"> {{doctor.username}}</h4>
-                <h5 class="text-muted mb-4">Address / {{doctor.address}}</h5>
-                <h5 class="text-muted mb-4">Price / {{doctor.price}}</h5>
+                  {%else%}
+                  <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6.webp" alt="avatar"
+                  class="rounded-circle img-fluid" style="width: 150px;">
+                  {%endif%}
+
+                  
+                <h3 class="text-uppercase my-3"> {{doctor.username}}</h3>
+                <h4 class=" mb-4">Address / {{doctor.address}}</h4>
+                <h5 class=" mb-4">specialty / {{doctor.spec}}</h5>
+                <h5 class=" mb-4">Price / {{doctor.price}}</h5>
                 <div class="d-flex justify-content-center mb-2">
                   <button type="button" class=" text-uppercase btn btn-outline-dark ms-1"><a class="navbar-brand" href="{{url_for('make_reservation',id=doctor.id)}}" >make reservation</a>
                   </button>
