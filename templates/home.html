@@ -61,8 +61,7 @@
 
 
                         {% if session['loggedin']  %}   
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="{{ url_for('find_doctor') }}">find doctor</a></li>
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="{{ url_for('chat') }}">ask Gemini</a></li>
+
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="{{url_for('profile')}}">
                              <span class="hidden" id="username">{{session.username}}</span>
 
@@ -127,30 +126,96 @@
                             <img class="img-fluid" style="width:500px;height:290px;" src="{{ url_for('static',filename='dist/assets/img/portfolio/diapetic.jpg') }}" alt="..." />
                             
                         </div>
+                        <div class="col text-center">
                         <h1>DIAPETIC</h1>
+                        </div>
+
                         {% if session['loggedin']  %}
+                        <div class="col text-center">
                         <a  class=" btn btn-primary" href="{{url_for('suger')}}">Get Started</a>
+                        </div>
 
                         {% else %}
+                        <div class="col text-center">
                         <a  class="btn btn-primary disabled" href="{{url_for('suger')}}" >Get Started</a>
+                        </div>
 
                         {% endif %}
                     </div>
+
                     <div class="col-md-6 col-lg-4 mb-5">
                         <div class="portfolio-item mx-auto" data-bs-toggle="modal" data-bs-target="#portfolioModal1">
                            
                             <img class="img-fluid" style="width:500px;height:290px;" src="{{ url_for('static',filename='dist/assets/img/portfolio/pneumonia.jpg') }}" alt="..." />
                             
                         </div>
-                        <h1>PNEUMONIA</h1>
+                            <div class="col text-center">
+
+                            <h1>PNEUMONIA</h1>
+                        </div>
+
                         {% if session['loggedin'] %}
-                        <a  class="btn btn-primary" href="{{url_for('test')}}">Get Started</a>
+                            <div class="col text-center">
+                            <a  class="btn btn-primary" href="{{url_for('test')}}">Get Started</a>
+                        </div>
 
                         {% else %}
-                        <a  class="btn btn-primary disabled" href="{{url_for('test')}}">Get Started</a>
+                            <div class="col text-center">
+                            <a  class="btn btn-primary disabled" href="{{url_for('test')}}">Get Started</a>
+                        </div>
 
                         {% endif %}
                     </div>
+
+                    <div class="col-md-6 col-lg-4 mb-5">
+                        <div class="portfolio-item mx-auto" data-bs-toggle="modal" data-bs-target="#portfolioModal1">
+                           
+                            <img class="img-fluid" style="width:500px;height:290px;" src="{{ url_for('static',filename='dist/assets/img/portfolio/doctorr.jpeg') }}" alt="..." />
+                            
+                        </div>
+                            <div class="col text-center">
+
+                            <h1>FIND YOUR DOCTOR</h1>
+                        </div>
+
+                        {% if session['loggedin'] %}
+                            <div class="col text-center">
+
+                            <a  class="btn btn-primary" href="{{url_for('find_doctor')}}">Get Started</a>
+                        </div>
+
+                        {% else %}
+                            <div class="col text-center">
+                            <a  class="btn btn-primary disabled" href="{{url_for('find_doctor')}}">Get Started</a>
+                        </div>
+
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 col-lg-4 mb-5">
+                        <div class="portfolio-item mx-auto" data-bs-toggle="modal" data-bs-target="#portfolioModal1">
+                           
+                            <img class="img-fluid" style="width:500px;height:290px;" src="{{ url_for('static',filename='dist/assets/img/portfolio/chatt.jpeg') }}" alt="..." />
+                            
+                        </div>
+                            <div class="col text-center">
+
+                            <h1>CHAT WIHT GEMINI</h1>
+                        </div>
+
+                        {% if session['loggedin'] %}
+                            <div class="col text-center">
+
+                            <a  class="btn btn-primary" href="{{url_for('chat')}}">Get Started</a>
+                        </div>
+
+                        {% else %}
+                            <div class="col text-center">
+                            <a  class="btn btn-primary disabled" href="{{url_for('chat')}}">Get Started</a>
+                        </div>
+
+                        {% endif %}
+                    </div>
+                 
                     <!-- Portfolio Item 2-->
                  
            

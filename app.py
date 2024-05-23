@@ -23,6 +23,7 @@ from keras.preprocessing import image
 
 # Flask utils
 from werkzeug.utils import secure_filename
+from faker import Faker
 
 app = Flask(__name__)
 
@@ -33,6 +34,114 @@ app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'prediction'
  
 mysql = MySQL(app)
+
+# fake = Faker()
+
+# db = MySQLdb.connect(host="localhost",
+#                      user="root",
+#                      passwd="",
+#                      db="prediction")
+
+# cursor = db.cursor()
+
+# # Function to generate and insert random data
+# def insert_random_data():
+#     username = fake.user_name()
+#     password = "password"  # Set a default password
+#     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+#     email = fake.email()
+
+#     city = fake.random_element(elements=(
+#     "Cairo",
+#     "Alexandria",
+#     "Giza",
+#     "Qalyubia",
+#     "Port Said",
+#     "Suez",
+#     "Gharbia",
+#     "Dakahlia",
+#     "Sharkia",
+#     "Monufia",
+#     "Beheira",
+#     "Kafr El Sheikh",
+#     "Fayoum",
+#     "Beni Suef",
+#     "Minya",
+#     "Asyut",
+#     "Sohag",
+#     "Qena",
+#     "Luxor",
+#     "Aswan",
+#     "Red Sea",
+#     "New Valley",
+#     "Matruh",
+#     "North Sinai",
+#     "South Sinai"
+
+#         ))
+#     address = fake.address()
+#     spec = fake.random_element(elements=('diapetic', 'penmounia'))  # Assuming job titles for specialization
+#     price = fake.random_int(min=50, max=400)  # Assuming price range
+#     sex = fake.random_element(elements=('male', 'female'))
+    
+#     # SQL query to insert random data
+#     sql = "INSERT INTO doctors (username, password, email, city, address, spec, price, sex) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+#     values = (username, hashed_password, email, city, address, spec, price, sex)
+    
+#     try:
+#         # Execute the SQL command
+#         cursor.execute(sql, values)
+#         # Commit changes in the database
+#         db.commit()
+#         print("Record inserted successfully")
+#     except MySQLdb.Error as e:
+#         # Rollback in case there is any error
+#         db.rollback()
+#         print(f"Error: {e}")
+
+# # Insert random data 10 times
+# for _ in range(10):
+#     insert_random_data()
+
+# # Disconnect from the server
+# db.close()
+
+egyptian_states = [
+    "Cairo",
+    "Alexandria",
+    "Giza",
+    "Qalyubia",
+    "Port Said",
+    "Suez",
+    "Gharbia",
+    "Dakahlia",
+    "Sharkia",
+    "Monufia",
+    "Beheira",
+    "Kafr El Sheikh",
+    "Fayoum",
+    "Beni Suef",
+    "Minya",
+    "Asyut",
+    "Sohag",
+    "Qena",
+    "Luxor",
+    "Aswan",
+    "Red Sea",
+    "New Valley",
+    "Matruh",
+    "North Sinai",
+    "South Sinai"
+]
+
+
+
+
+
+
+
+
+
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -138,7 +247,7 @@ def register():
             msg = 'You have successfully registered !'
     elif request.method == 'POST':
         msg = 'Please fill out the form !'
-    return render_template('register.html', msg = msg)
+    return render_template('register.html', msg = msg , states=egyptian_states)
 
 
 @app.route('/update_user', methods=['POST'])
@@ -148,7 +257,8 @@ def update_user():
     username = request.form['username']
     if username:
          usernamee = username.replace(" ", "_")
-    address = request.form['address']
+    address = request.form['address'].strip().capitalize()
+
     phone = request.form['phone']
 
     # Validate inputs
@@ -242,6 +352,7 @@ def doctorRegister():
         if username:
          usernamee = username.replace(" ", "_")
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         email = request.form['email']
         city = request.form['city']
         address = request.form['address']
@@ -255,6 +366,8 @@ def doctorRegister():
         account = cursor.fetchone()
         if account:
             msg = 'Account already exists !'
+        if password != confirm_password:
+            msg='Passwords do not match. Please try again.'    
         elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
             msg = 'Invalid email address !'
         elif not re.match(r'[A-Za-z0-9]+', username):
@@ -269,7 +382,7 @@ def doctorRegister():
             msg = 'You have successfully registered !'
     elif request.method == 'POST':
         msg = 'Please fill out the form !'
-    return render_template('doctorRegister.html', msg = msg)
+    return render_template('doctorRegister.html', msg = msg ,  states=egyptian_states)
 
 
 @app.route("/contact_us", methods =['GET', 'POST'])
@@ -587,12 +700,25 @@ def predict_suger():
     DiabetesPedigreeFunction = float(request.form['DiabetesPedigreeFunction'])
     Age= int(request.form['Age'])
     
-    if Age < 10 or Age > 100:
+    if not (0 <= Pregnancies <= 17):
+        return render_template('error.html', message='Pregnancies must be between 0 and 17')
+    if not (70 <= Glucose <= 130):
+        return render_template('error.html', message='Glucose must be between 70 and 130 mg/dL')
+    if not (60 <= BloodPressure <= 90):
+        return render_template('error.html', message='Blood Pressure must be between 60 and 90 mm Hg')
+    if not (10 <= SkinThickness <= 50):
+        return render_template('error.html', message='Skin Thickness must be between 10 and 50 mm')
+    if not (16 <= Insulin <= 166):
+        return render_template('error.html', message='Insulin must be between 16 and 166 mu U/ml')
+    if not (18.5 <= BMI <= 24.9):
+        return render_template('error.html', message='BMI must be between 18.5 and 24.9')
+    if not (0 <= DiabetesPedigreeFunction <= 2.5):
+        return render_template('error.html', message='Diabetes Pedigree Function must be between 0 and 2.5')
+    if not (10 <= Age <= 100):
         return render_template('error.html', message='Age must be between 10 and 100')
 
-    if Insulin < 0 or Insulin > 500:
-        return render_template('error.html', message='Insulin must be between 0 and 500')
-
+  
+ 
     prediction = suger_model.predict([[
         Pregnancies, Glucose,BloodPressure,SkinThickness,
         Insulin,BMI,DiabetesPedigreeFunction,Age
